@@ -1,0 +1,75 @@
+#
+# This manifest has a full example of bootstrapping a remote GKE cluster in one shot
+# by init Crossplane directly. Only change 2 placeholders "<CHANGE_ME>".
+# 
+# Another example of using Argo CD to init Crossplane as IaC then bootstrap the cluster:
+# https://github.com/DevOpsHiveHQ/kubezero/tree/main/bootstrap
+#
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crossplane-system
+---
+# Install Crossplane.
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: crossplane
+  namespace: crossplane-system
+spec:
+  repo: https://charts.crossplane.io/stable
+  chart: crossplane
+  targetNamespace: crossplane-system
+  valuesContent: |-
+    provider:
+      packages:
+      # Docs: https://marketplace.upbound.io/providers/upbound/provider-family-gcp
+      - "xpkg.upbound.io/upbound/provider-gcp-gke:v1.0.2"
+    configuration:
+      packages:
+      # Docs: https://marketplace.upbound.io/configurations/upbound/platform-ref-gcp
+      - "xpkg.upbound.io/upbound/platform-ref-gcp:v0.9.0"
+---
+# Configure Crossplane provider like GCP, AWS, etc.
+# Docs: https://docs.crossplane.io/latest/concepts/providers/#provider-configuration
+apiVersion: gcp.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  projectID: <CHANGE_ME>
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: gcp-secret
+      key: credentials
+---
+# Configure provider secret (varies between providers).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcp-secret
+  namespace: crossplane-system
+stringData:
+  credentials: <CHANGE_ME>
+---
+# Setup remote managment cluster.
+# Source: https://github.com/upbound/platform-ref-gcp/blob/7df646f/examples/cluster-claim.yaml
+apiVersion: gcp.platformref.upbound.io/v1alpha1
+kind: Cluster
+metadata:
+  name: managment
+  namespace: default
+spec:
+  compositeDeletePolicy: Foreground
+  parameters:
+    id: platform-ref-gcp
+    region: eu-west-1
+    version: latest
+    nodes:
+      count: 1
+      instanceType: n1-standard-4
+  writeConnectionSecretToRef:
+    name: platform-ref-gcp-kubeconfig

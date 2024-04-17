@@ -1,0 +1,17 @@
+---
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: crossplane-bootstrapper
+
+# Cluster resources.
+servers: 1
+agents: 1
+
+# Auto deployed manifests.
+files:
+- description: Setup Crossplane
+  source: manifest-crossplane-bootstrapper.yaml
+  destination: k3s-manifests/crossplane-bootstrapper.yaml
+  nodeFilters:
+  - "server:*"
