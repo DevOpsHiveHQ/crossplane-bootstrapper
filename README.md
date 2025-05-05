@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://devopshive.net/" style="display: block; padding: 1em 0;">
+  <a href="https://devopshive.com/" style="display: block; padding: 1em 0;">
     <img width="128px" alt="Crossplane Bootstrapper logo" border="0" src="img/crossplane-bootstrapper.svg"/>
   </a>
 </p>
